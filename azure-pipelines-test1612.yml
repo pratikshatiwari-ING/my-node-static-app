@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  javaVersion: '11'   # ❌ App requires Java 17
+  artifactName: 'spring-app'
+
+stages:
+- stage: Build
+  displayName: Build Java App
+  jobs:
+  - job: Build
+    steps:
+    - checkout: self
+
+    - task: JavaToolInstaller@0
+      displayName: Install Java
+      inputs:
+        versionSpec: $(javaVersion)
+        jdkArchitectureOption: x64
+        jdkSourceOption: PreInstalled
+
+    - script: |
+        ./mvnw clean package
+      displayName: Build with Maven Wrapper
+      # ❌ mvnw not executable
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifact
+      inputs:
+        PathtoPublish: target
+        ArtifactName: drop
+        publishLocation: Container
+
+- stage: Deploy
+  displayName: Deploy App
+  dependsOn: Build
+  jobs:
+  - job: Deploy
+    steps:
+    - download: current
+      artifact: drop
+
+    - script: |
+        java -jar target/app.jar
+      displayName: Run Application
+      # ❌ Wrong jar name (actual is target/*.jar)

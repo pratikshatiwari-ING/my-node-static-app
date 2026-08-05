@@ -1,0 +1,63 @@
+# azure-pipelines.yml
+trigger:
+  - main  # or your default branch
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  node_version: '20.x'
+  build_dir: '$(System.DefaultWorkingDirectory)'
+  artifact_name: 'drop'
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '$(node_version)'
+    displayName: 'Install Node.js'
+
+  - script: |
+      npm install
+      echo "✅ Node modules installed"
+    displayName: 'Install dependencies'
+
+  - script: |
+      npm run build || echo "No build script defined, skipping..."
+    displayName: 'Build the Node.js app'
+
+
+  # Archive the app into a zip
+  - task: ArchiveFiles@2
+    inputs:
+      rootFolderOrFile: '$(build_dir)'
+      includeRootFolder: false
+      archiveType: 'zip'
+      archiveFile: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      replaceExistingArchive: true
+    displayName: 'Archive app into zip'
+
+  # Publish the zip artifact
+  - task: PublishBuildArtifacts@1
+    inputs:
+      PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip'
+      # ArtifactName: '$(Build.BuildId).zip'
+      ArtifactName: 'drop'
+    displayName: 'Publish build artifact'
+
+
+  # Archive the app into a zip
+  # - task: ArchiveFiles@2
+  #   inputs:
+  #     rootFolderOrFile: '$(build_dir)'
+  #     includeRootFolder: false
+  #     archiveType: 'zip'
+  #     archiveFile: '$(Build.ArtifactStagingDirectory)/$(artifact_name)'
+  #     replaceExistingArchive: true
+  #   displayName: 'Archive app into zip'
+
+  # # Publish the zip artifact
+  # - task: PublishBuildArtifacts@1
+  #   inputs:
+  #     PathtoPublish: '$(Build.ArtifactStagingDirectory)/$(artifact_name)'
+  #     ArtifactName: '$(artifact_name)'
+  #   displayName: 'Publish build artifact'

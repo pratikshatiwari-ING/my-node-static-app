@@ -1,0 +1,39 @@
+name: my-node-static-app-1612-broken
+"on":
+  workflow_dispatch: {}
+  push:
+    branches:
+    - main
+env:
+  artifactName: spring-app
+  javaVersion: "11"
+jobs:
+  Build-Build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/checkout@v4.1.0
+    - name: Build with Maven Wrapper
+      shell: bash
+      run: |
+        ./mvnw clean package
+    - name: Upload Artifact drop
+      uses: actions/upload-artifact@v4
+      with:
+        name: drop
+        path: target
+  Deploy-Deploy:
+    needs:
+    - Build-Build
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - uses: actions/download-artifact@v4.1.0
+      with:
+        name: drop
+    - name: Run Application
+      shell: bash
+      run: 'java -jar target/app.jar '
+

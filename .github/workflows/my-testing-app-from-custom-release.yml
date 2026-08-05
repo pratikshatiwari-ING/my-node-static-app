@@ -1,0 +1,39 @@
+name: demoappp/my-testing-app/my-testing-app-from-custom-Release
+"on":
+  workflow_run:
+    types:
+    - completed
+    workflows:
+    - my-node-static-app-custom
+permissions:
+  contents: read
+  actions: read
+  id-token: write
+jobs:
+  Stage-1:
+    runs-on: ubuntu-latest
+    if: github.event_type != 'pull_request'
+    concurrency:
+      group: ${{ github.ref }}
+      cancel-in-progress: false
+    steps:
+    - name: Download artifacts from CI
+      uses: dawidd6/action-download-artifact@v6
+      with:
+        run_id: ${{ github.event.workflow_run.id }}
+        workflow: my-node-static-app-custom.yml
+        path: .
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v3
+      with:
+        package: drop/*.zip
+        app-name: my-testing-app
+    - name: Hi
+      run: |-
+        echo Write your commands here
+        echo Hello world
+

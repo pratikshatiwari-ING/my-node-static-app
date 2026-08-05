@@ -1,0 +1,55 @@
+name: my-node-static-app-custom-Build-Release
+"on":
+  workflow_dispatch: {}
+  push:
+    branches:
+    - main
+env:
+  system_debug: "false"
+jobs:
+  Job_1:
+    name: Agent job 1
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4.1.0
+    - name: Use Node 20.x
+      uses: actions/setup-node@v4.0.0
+      with:
+        node-version: 20.x
+    - name: npm install
+      if: "false"
+      run: npm install
+      working-directory: .
+    - name: npm build
+      if: "false"
+      run: npm run build
+      working-directory: .
+    - name: npm install
+      run: npm install
+    - name: npm build
+      run: npm run build || echo "No build script defined, skipping..."
+    - name: Create ZIP Artifact
+      if: "false"
+      run: |
+        echo "Zipping the build output...Migrated using custom transformer"
+        zip -r ${{ runner.temp }}/${{ github.run_id }}.zip ${{ github.workspace }} -x *.git* node_modules/*
+    - name: Create ZIP Artifact
+      run: |
+        echo "Zipping the build output...Migrated using custom transformer"
+        zip -r ${{ runner.temp }}/${{ github.run_id }}.zip . -x *.git* node_modules/*
+    - name: Upload Artifact drop
+      uses: actions/upload-artifact@v4
+      with:
+        name: drop
+        path: ${{ runner.temp }}/${{ github.run_id }}.zip
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        package: app.zip
+        app-name: my-testing-app
+
